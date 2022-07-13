@@ -1,0 +1,4 @@
+[submodule "rec_rays/vendor/glm"]
+	path = rec_rays/vendor/glm
+	url = https://github.com/g-truc/glm.git
+
