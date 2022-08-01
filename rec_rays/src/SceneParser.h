@@ -2,6 +2,7 @@
 #include "RecursiveRayTracer.h"
 #include <string>
 
+
 namespace RecRays
 {
 	class SceneParser
@@ -15,5 +16,19 @@ namespace RecRays
 		 * \return Success status, 0 for success, 1 for failure
 		 */
 		static int Parse(const std::string& filepath, SceneDescription& outDescription);
+
+	private:
+		std::vector<float> ParseNNumbers(std::stringstream& ss, int numArgs)
+		{
+			std::vector<float> result;
+
+			for (int i = 0; i < numArgs; i++)
+			{
+				float value;
+				ss >> value;
+
+				result.push_back(value);
+			}
+		}
 	};
 }
