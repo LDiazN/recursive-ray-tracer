@@ -8,6 +8,12 @@ namespace RecRays
 	{
 		SceneParser();
 
-		int Parse(const std::string& filepath, SceneDescription& outDescription);
+		/**
+		 * \brief Try to parse a scene from file
+		 * \param filepath Filepath to scene file to read from
+		 * \param outDescription generated description if everything went ok
+		 * \return Success status, 0 for success, 1 for failure
+		 */
+		static int Parse(const std::string& filepath, SceneDescription& outDescription);
 	};
 }

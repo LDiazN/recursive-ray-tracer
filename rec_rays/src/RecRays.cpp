@@ -1,14 +1,8 @@
 #include <RecRays.h>
+#include <FreeImage.h>
 
 namespace RecRays
 {
-	int Client::Run()
-	{
-		std::cout << "Starting RecRays..." << std::endl;
-
-		return SUCCESS;
-	}
-
 	int Client::ParseArgs(int argc, char** argv, std::string& outParsedFilepath)
 	{
 		if (argc < 2)
@@ -32,5 +26,31 @@ namespace RecRays
 		outParsedFilepath = filepath;
 		return SUCCESS;
 	}
+
+	int Client::Run()
+	{
+		std::cout << "Starting RecRays..." << std::endl;
+		Init();
+
+
+
+		
+		Shutdown();
+		return SUCCESS;
+	}
+
+	void Client::Init()
+	{
+		std::cout << "Starting FreeImage..." << std::endl;
+		FreeImage_Initialise();
+	}
+
+	void Client::Shutdown()
+	{
+		std::cout << "Shutting down FreeImage..." << std::endl;
+		FreeImage_DeInitialise();
+	}
+
+
 
 }

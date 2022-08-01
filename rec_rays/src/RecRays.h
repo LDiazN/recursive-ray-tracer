@@ -43,13 +43,19 @@ namespace RecRays
 		 * \brief Init subsystems, like freeimage
 		 */
 		void Init();
+
+		/**
+		 * \brief Shutdown subsystems, 
+		 */
+		void Shutdown();
+
 	private:
 		/**
 		 * \brief File where the scene will be parsed from
 		 */
 		std::string m_SceneFile;
 
-		// Dimensions of image
+		// Dimensions of image to render
 		size_t m_Width, m_Height;
 
 	};
