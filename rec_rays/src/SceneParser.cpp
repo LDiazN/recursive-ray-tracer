@@ -42,16 +42,15 @@ namespace RecRays
 			// Parse according to the command
 			if (command == "light")
 			{
-				float lightPosX, lightPosY, lightPosZ, lightPosW;
-				float lightColorX, lightColorY, lightColorZ, lightColorW;
+				auto const nums = ParseNNumbers(ss, 8);
 
-				ss	>> lightPosX >> lightPosY >> lightPosZ >> lightPosW
-					>> lightColorX >> lightColorY >> lightColorZ >> lightColorW;
+				Light newLight{
+					glm::vec4(nums[0], nums[1], nums[2], nums[3]),
+					glm::vec4(nums[4], nums[5], nums[6], nums[7])
+				};
 
-				if (ss.fail())
-				{
-					assert(false && "Could not parse light command");
-				}
+				auto couldAdd = description.AddLight(newLight);
+				assert(couldAdd == SUCCESS && "Could not add light: too many lights");
 			}
 			else
 			{
@@ -64,5 +63,21 @@ namespace RecRays
 		outDescription = description;
 		return SUCCESS;
 	}
+
+	std::vector<float> SceneParser::ParseNNumbers(std::stringstream& ss, int numArgs)
+	{
+		std::vector<float> result(numArgs);
+
+		for (int i = 0; i < numArgs; i++)
+		{
+			float value;
+			assert(ss >> value && "Could no read float value");
+
+			result[i] = value;
+		}
+
+		return result;
+	}
+
 
 }
