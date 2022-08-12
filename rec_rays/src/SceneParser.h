@@ -18,17 +18,6 @@ namespace RecRays
 		static int Parse(const std::string& filepath, SceneDescription& outDescription);
 
 	private:
-		std::vector<float> ParseNNumbers(std::stringstream& ss, int numArgs)
-		{
-			std::vector<float> result;
-
-			for (int i = 0; i < numArgs; i++)
-			{
-				float value;
-				ss >> value;
-
-				result.push_back(value);
-			}
-		}
+		static std::vector<float> ParseNNumbers(std::stringstream& ss, int numArgs);
 	};
 }
