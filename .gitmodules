@@ -1,4 +1,7 @@
 [submodule "rec_rays/vendor/glm"]
 	path = rec_rays/vendor/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "rec_rays/vendor/freeimage"]
+	path = rec_rays/vendor/freeimage
+	url = https://github.com/LDiazN/freeimage.git
 
