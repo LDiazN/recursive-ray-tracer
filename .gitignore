@@ -36,3 +36,4 @@ bin
 bin-int
 *.vcxproj*
 *.sln
+.vs
