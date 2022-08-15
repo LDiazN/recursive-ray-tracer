@@ -7,7 +7,7 @@ int main(int argc, char ** argv)
 {
 
 
-    // Parse arguments for client object 
+    // Parse arguments for client object
     std::string sceneFile;
 	int status = RecRays::Client::ParseArgs(argc, argv, sceneFile);
 

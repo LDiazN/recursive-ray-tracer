@@ -10,6 +10,7 @@
 
 // External includes
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace RecRays
 {
@@ -21,6 +22,9 @@ namespace RecRays
 
 		// New scene where data will be stored
 		SceneDescription description;
+
+		// Next object to add
+		Object nextObject;
 
 		// Open and read file line by line
 		std::ifstream infile(filepath);
@@ -52,13 +56,98 @@ namespace RecRays
 				auto couldAdd = description.AddLight(newLight);
 				assert(couldAdd == SUCCESS && "Could not add light: too many lights");
 			}
+			else if (command == "ambient")
+			{
+				auto const nums = ParseNNumbers(ss, 4);
+				nextObject.ambient = glm::vec4(nums[0], nums[1], nums[2], nums[3]);
+			}
+			else if (command == "diffuse")
+			{
+				auto const nums = ParseNNumbers(ss, 4);
+				nextObject.diffuse = glm::vec4(nums[0], nums[1], nums[2], nums[3]);
+			}
+			else if (command == "specular")
+			{
+				auto const nums = ParseNNumbers(ss, 4);
+				nextObject.ambient = glm::vec4(nums[0], nums[1], nums[2], nums[3]);
+			}
+			else if (command == "shininess")
+			{
+				auto const nums = ParseNNumbers(ss, 1);
+				nextObject.shininess = nums[0];
+			}
+			else if (command == "size")
+			{
+				auto const nums = ParseNNumbers(ss, 2);
+				nextObject.size.x = static_cast<int>(nums[0]);
+				nextObject.size.y = static_cast<int>(nums[1]);
+			}
+			else if (command == "camera")
+			{
+				auto const nums = ParseNNumbers(ss, 10);
+				CameraDescription camera{
+					glm::vec3(nums[0], nums[1], nums[2]),
+					glm::vec3(nums[3], nums[4], nums[5]),
+					glm::vec3(nums[6], nums[7], nums[8]),
+					nums[9]
+				};
+				description.camera = camera;
+			}
+			else if (command == "sphere" || command == "cube" || command == "teapot")
+			{
+				// Object pushing: Push current object into scene
+				nextObject.transform = transformStack.top();
+
+				// Set up object type
+				if (command == "sphere")
+					nextObject.shape = Shape::Sphere;
+				else if (command == "cube")
+					nextObject.shape = Shape::Cube;
+				else if (command == "teapot")
+					nextObject.shape = Shape::Teapot;
+
+				description.AddObject(nextObject);
+			}
+			else if (command == "translate")
+			{
+				auto const nums = ParseNNumbers(ss, 3);
+				glm::vec3 newTranslate(nums[0], nums[1], nums[2]);
+
+				// Alter top transform
+				auto& topTransform = transformStack.top();
+				topTransform = glm::translate(topTransform, newTranslate);
+			}
+			else if (command == "scale")
+			{
+				auto const nums = ParseNNumbers(ss, 3);
+				glm::vec3 newScale(nums[0], nums[1], nums[2]);
+
+				// Alter top transform
+				auto& topTransform = transformStack.top();
+				topTransform = glm::scale(topTransform, newScale);
+			}
+			else if (command == "rotate")
+			{
+				auto const nums = ParseNNumbers(ss, 4);
+				glm::vec3 rotationAxis(nums[0], nums[1], nums[2]);
+				float rotationDegrees = nums[3];
+
+				auto& topTransform = transformStack.top();
+				topTransform = glm::rotate(topTransform, glm::radians(rotationDegrees), rotationAxis);
+			}
+			else if (command == "pushTransform") // Save current transform by pushing a copy
+				transformStack.push(transformStack.top());
+			else if (command == "popTransform")
+				if (transformStack.size() <= 1)
+					std::cerr << "No transform in stack, can't pop transform" << std::endl;
+				else
+					transformStack.pop();
 			else
 			{
-				assert(false && "Unrecognized command");
+				std::cerr << "Unrecognized command: " << command << std::endl;
+				assert(false);
 			}
-
 		}
-
 
 		outDescription = description;
 		return SUCCESS;

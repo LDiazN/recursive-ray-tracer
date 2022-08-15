@@ -7,8 +7,10 @@ namespace RecRays
 {
 	class SceneParser
 	{
+		// Default constructor private, use static members only
 		SceneParser();
 
+	public:
 		/**
 		 * \brief Try to parse a scene from file
 		 * \param filepath Filepath to scene file to read from

@@ -1,5 +1,11 @@
+// stl includes
+#include <iostream>
+
+// Local includes
 #include <RecRays.h>
 #include <FreeImage.h>
+#include "SceneParser.h"
+
 
 namespace RecRays
 {
@@ -23,7 +29,7 @@ namespace RecRays
 			return FAIL;
 		}
 
-		outParsedFilepath = filepath;
+		outParsedFilepath = absolute(path).string();
 		return SUCCESS;
 	}
 
@@ -32,9 +38,19 @@ namespace RecRays
 		std::cout << "Starting RecRays..." << std::endl;
 		Init();
 
+		// Try to parse scene
+		std::cout << "Parsing scene from " << m_SceneFile << "..." << std::endl;
 
+		SceneDescription scene;
+		auto status = SceneParser::Parse(m_SceneFile, scene);
+		if (status != SUCCESS)
+		{
+			std::cerr << "[ERROR] Could not parse scene" << std::endl;
+			return FAIL;
+		}
 
 		
+		std::cout << "Shutting Down RecRays..." << std::endl;
 		Shutdown();
 		return SUCCESS;
 	}
