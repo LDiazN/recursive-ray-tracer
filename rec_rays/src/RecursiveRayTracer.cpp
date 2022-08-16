@@ -55,13 +55,24 @@ namespace RecRays
 
 	void Camera::UpdateCoordinateAxis()
 	{
-		auto v = glm::normalize(m_PosToLookAt - m_Position);
-		auto u = glm::normalize(glm::cross(v, m_Up));
-		auto w = glm::normalize(glm::cross(u, v));
+		auto const v = glm::normalize(m_PosToLookAt - m_Position);
+		auto const u = glm::normalize(glm::cross(v, m_Up));
+		auto const w = glm::normalize(glm::cross(u, v));
 
 		m_U = u;
 		m_V = v;
 		m_W = w;
 		// TODO terminar esta implementación de camara (no esta función) y crear el generador de rayos
+	}
+
+	Ray RayGenerator::GetRayThroughPixel(size_t pixelX, size_t pixelY, RayType type)
+	{
+		float pixelWidth = (m_Right + m_Left) / static_cast<float>(m_PixelsX);
+		float pixelHeight = (m_Top + m_Bottom) / static_cast<float>(m_PixelsY);
+
+
+		
+
+
 	}
 }
