@@ -142,6 +142,17 @@ namespace RecRays
 					std::cerr << "No transform in stack, can't pop transform" << std::endl;
 				else
 					transformStack.pop();
+			else if (command == "image")
+			{
+				// image width height resX resY
+				auto const nums = ParseNNumbers(ss, 5);
+
+				description.imgWidth = nums[0];
+				description.imgHeight = nums[1];
+				description.imgResX = nums[2];
+				description.imgResY = nums[3];
+				description.imgDistanceToViewplane = nums[4];
+			}
 			else
 			{
 				std::cerr << "Unrecognized command: " << command << std::endl;

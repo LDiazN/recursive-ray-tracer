@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <glm/glm.hpp>
+#include <FreeImage.h>
 
 namespace RecRays
 {
@@ -38,6 +39,10 @@ namespace RecRays
 		Shape shape;
 		glm::ivec2 size; // a scaling factor
 		glm::mat4 transform;
+
+		static std::array<glm::vec3, 8> CubeGeometry();
+
+		static std::
 	};
 
 	/**
@@ -64,7 +69,6 @@ namespace RecRays
 	struct SceneDescription
 	{
 
-		bool enableLight = true;
 
 		inline size_t GetNumLights() const { return lights.size(); }
 		inline size_t GetNumObjects() const { return objects.size(); }
@@ -80,7 +84,17 @@ namespace RecRays
 		inline const std::vector<Light>& GetLights() { return lights; }
 		inline const std::vector<Object>& GetObjects() { return objects; }
 
+		// If should use lighting
+		bool enableLight = true;
+
+		// Camera specification
 		CameraDescription camera;
+
+		// Image specification
+		float imgWidth, imgHeight;	// Dimensions of output image
+		float imgDistanceToViewplane; // Distance from viewpoint to viewplane
+		size_t imgResX, imgResY;	// Resolution in each axis for this image
+
 
 	private:
 		std::vector<Light> lights;
@@ -121,12 +135,83 @@ namespace RecRays
 		glm::vec3 m_U, m_V, m_W; 
 	};
 
+	struct Ray
+	{
+		glm::vec3 position;
+		glm::vec3 direction;
+	};
+
+	class RayGenerator
+	{
+	public:
+		/**
+		 * \brief Specifies possible variants for the ray generation process,
+		 * MID is in the middle of the pixel, TOP_LEFT is in the top left corner, and RANDOMIZED is mid with a small
+		 * variation
+		 */
+		enum class RayType
+		{
+			MID,
+			TOP_LEFT,
+			RANDOMIZED
+		};
+	public:
+		RayGenerator(Camera camera, size_t pixelsX, size_t pixelsY, float left, float right, float bottom, float top, float distanceToViewPlane)
+			: m_Camera(camera)
+			, m_PixelsX(pixelsX)
+			, m_PixelsY(pixelsY)
+			, m_Left(left)
+			, m_Right(right)
+			, m_Bottom(bottom)
+			, m_Top(top)
+			, m_DistanceToViewPlane(distanceToViewPlane)
+		{ }
+
+		/**
+		 * \brief Create a ray generator from an image specification
+		 * \param camera Camera with valid coordinate axis
+		 * \param width width of expected image
+		 * \param height height of expected image
+		 * \param resolutionX How many pixels in X
+		 * \param resolutionY How many pixels in Y
+		 */
+		RayGenerator(Camera camera, float width, float height, size_t resolutionX, size_t resolutionY, float distanceToViewPlane)
+			: RayGenerator(camera, resolutionX, resolutionY, width / 2.f, width / 2.f, height / 2.f, height / 2.f, distanceToViewPlane)
+		{ }
+
+		/**
+		 * \brief Generate a ray that will pass through the specified pixel according to its X and Y indices
+		 * \param pixelX Index in X axis for this pixel, starting from left to right
+		 * \param pixelY Index in Y axis for this pixel, starting from top to bottom
+		 * \param type Type of ray to generate
+		 * \return Resulting ray	
+		 */
+		Ray GetRayThroughPixel(size_t pixelX, size_t pixelY, RayType type = RayType::MID);
+
+	private:
+		Camera m_Camera;
+		// amount of pixels in each axis
+		size_t m_PixelsX, m_PixelsY;
+
+		// Where to start each side of the viewing plane, using the coordinate frame from the camera
+		float m_Left, m_Right, m_Bottom, m_Top;
+
+		// Distance from camera to viewing plane
+		float m_DistanceToViewPlane;
+	};
+
 	class RecursiveRayTracer
 	{
 	public:
-		RecursiveRayTracer(const SceneDescription& description) : m_SceneDescription(description) {}
+		RecursiveRayTracer(const SceneDescription& description);
+
+		int Draw(FIBITMAP*& outImage);
 
 	private:
+		// Scene to render 
 		SceneDescription m_SceneDescription;
+		// Object to generate rays from scene description
+		RayGenerator m_RayGenerator;
+
 	};
 }
