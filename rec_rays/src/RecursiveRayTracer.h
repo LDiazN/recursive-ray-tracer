@@ -1,7 +1,14 @@
 #pragma once
+// STL Includes
 #include <vector>
+#include <memory>
+
+// Third party includes
 #include <glm/glm.hpp>
 #include <FreeImage.h>
+
+// Local includes
+#include "Geometry.h"
 
 namespace RecRays
 {
@@ -37,12 +44,14 @@ namespace RecRays
 
 		// Geometry
 		Shape shape;
-		glm::ivec2 size; // a scaling factor
+		float size; // a scaling factor
 		glm::mat4 transform;
+		Geometry geometry; // empty geometry when it's sphere
 
-		static std::array<glm::vec3, 8> CubeGeometry();
-
-		static std::
+		/**
+		 * \brief Set up geometry ptr according to the shape
+		 */
+		void SetGeometry(const glm::mat4& ViewMatrix);
 	};
 
 	/**
@@ -121,6 +130,12 @@ namespace RecRays
 		void SetUp(glm::vec3 newUp);
 		void SetPosition(glm::vec3 newPosition);
 		void SetPosToLookAt(glm::vec3 newPosToLookAt);
+
+		/**
+		 * \brief Compute a model view matrix as a look at matrix
+		 * \return A model view matrix implemented as a look at matrix
+		 */
+		glm::mat4 GetModelViewMatrix() const;
 
 	private:
 		/**

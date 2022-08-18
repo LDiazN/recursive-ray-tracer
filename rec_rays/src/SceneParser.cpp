@@ -97,6 +97,7 @@ namespace RecRays
 			{
 				// Object pushing: Push current object into scene
 				nextObject.transform = transformStack.top();
+				auto const nums = ParseNNumbers(ss, 1);
 
 				// Set up object type
 				if (command == "sphere")
@@ -106,7 +107,9 @@ namespace RecRays
 				else if (command == "teapot")
 					nextObject.shape = Shape::Teapot;
 
+				nextObject.size = nums[0];
 				description.AddObject(nextObject);
+				nextObject = Object();
 			}
 			else if (command == "translate")
 			{

@@ -11,7 +11,8 @@ namespace RecRays
 {
 	struct Geometry
 	{
-		std::vector<glm::vec3> geometry;
+		std::vector<glm::vec3> vertices;
+		std::vector<glm::vec3> normals;
 		std::vector<glm::uvec3> indices;
 	};
 
@@ -35,11 +36,12 @@ namespace RecRays
 		static Geometry GetTeapotGeometry();
 
 	private:
-		void LoadTeapotGeometry();
-		void LoadCubeGeometry();
+		static void LoadTeapotGeometry();
+		static void LoadCubeGeometry();
 	private:
 		static Geometry s_CubeGeometry;
 		static Geometry s_TeapotGeometry;
 		inline static bool s_Initialized = false;
+		static constexpr char* s_PathToTeapotObj = "models/teapot.obj";
 	};
 }

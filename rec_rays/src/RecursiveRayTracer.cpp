@@ -1,6 +1,8 @@
 #include "RecursiveRayTracer.h"
 #include "RecRays.h"
 #include <assert.h>
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace RecRays
 {
 	// -- < Scene Description > -------------------------
@@ -25,6 +27,34 @@ namespace RecRays
 
 		return SUCCESS;
 	}
+
+	// -- < Object > ---------------------------------
+	void Object::SetGeometry(const glm::mat4& ViewMatrix)
+	{
+		// Load proper geometry
+		switch (shape)
+		{
+		case Shape::Cube:
+			geometry = GeometryLoader::GetCubeGeometry();
+			break;
+		case Shape::Teapot:
+			geometry = GeometryLoader::GetTeapotGeometry();
+			break;
+		case Shape::Sphere:
+			return;
+		default:
+			assert(false && "Invalid shape");
+		}
+
+		// Transform geometry:
+		for (auto& vertex : geometry.vertices)
+		{
+			// Scale object to right size
+			vertex = size * vertex;
+		}
+		// TODO terminar esta función para que termine de transformar los vertices al formato apropiado
+	}
+
 	// -- < Camera > -----------------------------------
 
 	Camera::Camera(glm::vec3 up, glm::vec3 position, glm::vec3 posToLookAt)
@@ -64,6 +94,29 @@ namespace RecRays
 		m_W = w;
 		// TODO terminar esta implementación de camara (no esta función) y crear el generador de rayos
 	}
+
+	glm::mat4 Camera::GetModelViewMatrix() const
+	{
+		glm::mat4 axisTransform = {
+			m_U.x, m_U.y, m_U.z, 0.f,
+			m_V.x, m_V.y, m_V.z, 0.f,
+			m_W.x, m_W.y, m_W.z, 0.f,
+			0.f, 0.f, 0.f, 1.f
+		};
+
+
+		glm::mat4 inverseTranslation = {
+			0.f, 0.f, 0.f, 0.f,
+			0.f, 0.f, 0.f, 0.f,
+			0.f, 0.f, 0.f, 0.f,
+			-(m_Position.x - m_PosToLookAt.x), -(m_Position.y - m_PosToLookAt.y), -(m_Position.z - m_PosToLookAt.z), 0.f,
+		};
+
+		return axisTransform * inverseTranslation;
+	}
+
+
+	// -- < Ray Generation > ----------------------------------------------
 
 	Ray RayGenerator::GetRayThroughPixel(size_t pixelX, size_t pixelY, RayType type)
 	{
