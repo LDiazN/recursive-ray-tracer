@@ -152,16 +152,25 @@ namespace RecRays
 		return Ray{ m_Camera.GetPosition(), pixelCoordinates - m_Camera.GetPosition() };
 	}
 
+	// -- < Recursive ray tracer > ----------------------------------------------
 	RecursiveRayTracer::RecursiveRayTracer(const SceneDescription& description)
-		: m_SceneDescription(description)
-		, m_RayGenerator(
-			Camera(description.camera.up, description.camera.position, description.camera.lookAt),
+	{
+		// Set up scene description 
+		m_SceneDescription = description;
+
+		// Set up ray generator
+		auto const cam = Camera(description.camera.up, description.camera.position, description.camera.lookAt);
+		auto const height = HeightFromAspectRatio(description.imgWidth / description.imgHeight, description.imgWidth);
+		m_RayGenerator = RayGenerator{
+			cam,
 			description.imgWidth,
-			description.imgHeight,
+			height, // ??
 			description.imgResX,
 			description.imgResY,
-			description.imgDistanceToViewplane)
-	{ }
+			FocalLength(description.camera.fovy,height)
+		};
+
+	}
 
 	int RecursiveRayTracer::Draw(FIBITMAP*& outImage)
 	{
@@ -193,6 +202,21 @@ namespace RecRays
 		// TODO: Terminar el ray tracer
 		outImage = Image;
 		return SUCCESS;
+	}
+
+	float RecursiveRayTracer::FocalLength(float fovy, float height)
+	{
+		float const cos = glm::pow(glm::cos(fovy / 2.f), 2.f);
+		float result = cos * height * height;
+		result = result / (1 - cos);
+		result = glm::sqrt(result);
+		
+		return result;
+	}
+
+	float RecursiveRayTracer::HeightFromAspectRatio(float aspectRatio, float width)
+	{
+		return width / aspectRatio;
 	}
 
 }

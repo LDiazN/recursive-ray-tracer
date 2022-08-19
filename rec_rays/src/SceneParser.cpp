@@ -78,9 +78,8 @@ namespace RecRays
 			}
 			else if (command == "size")
 			{
-				auto const nums = ParseNNumbers(ss, 2);
-				nextObject.size.x = static_cast<int>(nums[0]);
-				nextObject.size.y = static_cast<int>(nums[1]);
+				auto const nums = ParseNNumbers(ss, 1);
+				nextObject.size = nums[0];
 			}
 			else if (command == "camera")
 			{

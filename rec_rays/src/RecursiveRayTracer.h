@@ -59,12 +59,7 @@ namespace RecRays
 	 */
 	struct CameraDescription
 	{
-		CameraDescription(glm::vec3 _position = { 0,0,0 }, glm::vec3 _lookAt = { 0,0,0 }, glm::vec3 _up = { 0,0,0 }, float _fovy = 0)
-			: position(_position)
-			, lookAt(_lookAt)
-			, up(_up)
-			, fovy(_fovy)
-		{ }
+
 
 		glm::vec3 position;	// Camera position in world coordinates
 		glm::vec3 lookAt;	// Point where the camera is looking at
@@ -99,11 +94,10 @@ namespace RecRays
 		// Camera specification
 		CameraDescription camera;
 
-		// Image specification
-		float imgWidth, imgHeight;	// Dimensions of output image
-		float imgDistanceToViewplane; // Distance from viewpoint to viewplane
-		size_t imgResX, imgResY;	// Resolution in each axis for this image
-
+		// Output image specification
+		float imgHeight, imgWidth; // Height Possibly unused
+		size_t imgResX, imgResY;
+		float imgDistanceToViewplane; // Possibly unused
 
 	private:
 		std::vector<Light> lights;
@@ -117,7 +111,7 @@ namespace RecRays
 	{
 	public:
 
-		Camera(glm::vec3 up, glm::vec3 position, glm::vec3 posToLookAt);
+		Camera(glm::vec3 up = { 0,0,0 }, glm::vec3 position = { 0,0,0 }, glm::vec3 posToLookAt = {0,0,0});
 
 		inline glm::vec3 GetU() const { return m_U; }
 		inline glm::vec3 GetV() const { return m_V; }
@@ -189,10 +183,13 @@ namespace RecRays
 		 * \param height height of expected image
 		 * \param resolutionX How many pixels in X
 		 * \param resolutionY How many pixels in Y
+		 * \param distanceToViewPlane Distance from the camera (or eye) to the view plane, also called focal length
 		 */
 		RayGenerator(Camera camera, float width, float height, size_t resolutionX, size_t resolutionY, float distanceToViewPlane)
 			: RayGenerator(camera, resolutionX, resolutionY, width / 2.f, width / 2.f, height / 2.f, height / 2.f, distanceToViewPlane)
 		{ }
+
+		RayGenerator() = default;
 
 		/**
 		 * \brief Generate a ray that will pass through the specified pixel according to its X and Y indices
@@ -228,5 +225,23 @@ namespace RecRays
 		// Object to generate rays from scene description
 		RayGenerator m_RayGenerator;
 
+	private:
+
+
+
+		/**
+		 * \brief Utility function to compute focal length from camera configuration
+		 * \param fovy Fovy for camera specification
+		 * \param height Height of view plane
+		 * \return focal length, distance from eye to viewplane
+		 */
+		static float FocalLength(float fovy, float height);
+
+		/**
+		 * \brief Utility function to compute height of image based on width and aspect ratio
+		 * \param aspectRatio Aspect ratio (width / height) from image
+		 * \return Expected height
+		 */
+		static float HeightFromAspectRatio(float aspectRatio, float width);
 	};
 }
