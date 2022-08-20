@@ -51,7 +51,7 @@ namespace RecRays
 		/**
 		 * \brief Set up geometry ptr according to the shape
 		 */
-		void SetGeometry(const glm::mat4& ViewMatrix);
+		void SetGeometry();
 	};
 
 	/**
@@ -86,7 +86,8 @@ namespace RecRays
 		int AddObject(const Object& newObject);
 
 		inline const std::vector<Light>& GetLights() { return lights; }
-		inline const std::vector<Object>& GetObjects() { return objects; }
+		inline std::vector<Object>& GetObjects() { return objects; }
+		inline const std::vector<Object>& GetObjectsConst() { return objects; }
 
 		// If should use lighting
 		bool enableLight = true;
@@ -136,6 +137,7 @@ namespace RecRays
 		 * \brief Update internal state of coordinate axis
 		 */
 		void UpdateCoordinateAxis();
+
 	private:
 		// Configuration parameters
 		glm::vec3 m_Up, m_Position, m_PosToLookAt;
@@ -185,11 +187,9 @@ namespace RecRays
 		 * \param resolutionY How many pixels in Y
 		 * \param distanceToViewPlane Distance from the camera (or eye) to the view plane, also called focal length
 		 */
-		RayGenerator(Camera camera, float width, float height, size_t resolutionX, size_t resolutionY, float distanceToViewPlane)
+		RayGenerator(Camera camera = Camera(), float width = 0, float height = 0, size_t resolutionX = 0, size_t resolutionY = 0, float distanceToViewPlane = 0)
 			: RayGenerator(camera, resolutionX, resolutionY, width / 2.f, width / 2.f, height / 2.f, height / 2.f, distanceToViewPlane)
 		{ }
-
-		RayGenerator() = default;
 
 		/**
 		 * \brief Generate a ray that will pass through the specified pixel according to its X and Y indices
@@ -199,6 +199,8 @@ namespace RecRays
 		 * \return Resulting ray	
 		 */
 		Ray GetRayThroughPixel(size_t pixelX, size_t pixelY, RayType type = RayType::MID);
+
+		const Camera& GetCamera() const { return m_Camera; }
 
 	private:
 		Camera m_Camera;
@@ -210,6 +212,17 @@ namespace RecRays
 
 		// Distance from camera to viewing plane
 		float m_DistanceToViewPlane;
+	};
+
+	struct RayIntersectionResult
+	{
+		std::shared_ptr<const Object*> object;
+		glm::vec3 normal;
+		glm::vec3 position; // world coordinates
+		float t; // Intersection point in ray. How far from origin 
+
+		bool WasIntersection() const { return object != nullptr; }
+
 	};
 
 	class RecursiveRayTracer
@@ -226,9 +239,6 @@ namespace RecRays
 		RayGenerator m_RayGenerator;
 
 	private:
-
-
-
 		/**
 		 * \brief Utility function to compute focal length from camera configuration
 		 * \param fovy Fovy for camera specification
@@ -240,8 +250,40 @@ namespace RecRays
 		/**
 		 * \brief Utility function to compute height of image based on width and aspect ratio
 		 * \param aspectRatio Aspect ratio (width / height) from image
+		 * \param width Widht of image
 		 * \return Expected height
 		 */
 		static float HeightFromAspectRatio(float aspectRatio, float width);
+
+		/**
+		 * \brief Set up geometry of objects in scene description so it matches with the camera
+		 */
+		void SetUpGeometry();
+
+		/**
+		 * \brief Intersect a ray and return a description of the intersection point, if any.
+		 * Returned object is guaranteed to be the nearest
+		 * \param ray Intersect the provided ray with some objects in the scene
+		 * \return Result describing intersection point if any
+		 */
+		RayIntersectionResult IntersectRay(const Ray& ray);
+
+		/**
+		 * \brief Perform ray intersection between the provided ray and object
+		 * \param ray Ray to intersect
+		 * \param object Object to check for intersection, with vertices in world coordinates
+		 * \return Ray intersection description if any
+		 */
+		RayIntersectionResult IntersectRayToObject(const Ray& ray, const Object& object) const;
+
+		/**
+		 * \brief Check for intersection between the provided ray and sphere. Will crash if
+		 * object is not of type sphere
+		 * \param ray Ray to intersect
+		 * \param sphere Object of type sphere to check for intersection
+		 * \return Intersection description
+		 */
+		RayIntersectionResult IntersectRayToSphere(const Ray& ray, const Object& sphere) const;
+
 	};
 }

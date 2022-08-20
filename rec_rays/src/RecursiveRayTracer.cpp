@@ -29,7 +29,7 @@ namespace RecRays
 	}
 
 	// -- < Object > ---------------------------------
-	void Object::SetGeometry(const glm::mat4& ViewMatrix)
+	void Object::SetGeometry()
 	{
 		// Load proper geometry
 		switch (shape)
@@ -51,8 +51,17 @@ namespace RecRays
 		{
 			// Scale object to right size
 			vertex = size * vertex;
+
+			// Set up vertices  transformation
+			vertex = glm::vec3(transform * glm::vec4(vertex, 1.0f));
 		}
-		// TODO terminar esta función para que termine de transformar los vertices al formato apropiado
+
+		// Set up normals
+		auto const inverseTransform = glm::transpose(glm::inverse(transform));
+		for(auto& normal : geometry.normals)
+		{
+			normal = glm::vec3(inverseTransform * glm::vec4(normal, 0.f));
+		}
 	}
 
 	// -- < Camera > -----------------------------------
@@ -92,7 +101,6 @@ namespace RecRays
 		m_U = u;
 		m_V = v;
 		m_W = w;
-		// TODO terminar esta implementación de camara (no esta función) y crear el generador de rayos
 	}
 
 	glm::mat4 Camera::GetModelViewMatrix() const
@@ -183,6 +191,20 @@ namespace RecRays
 		if (!Image)
 			return FAIL;
 
+		// Set up geometry for objects. I think this is unnecessary bc the ray casting should be
+		// enough to simulate camera positioning
+		SetUpGeometry();
+
+		// Now we can intersect things with rays
+		for (size_t i = 0; i < m_SceneDescription.imgResX; i++)
+		{
+			for (size_t j = 0; i < m_SceneDescription.imgResY; i++)
+			{
+				auto const ray = m_RayGenerator.GetRayThroughPixel(i, j);
+				// TODO handle ray-object intersection here
+			}
+		}
+
 		// -- < TODO SAMPLE CODE, DELETE LATER AND REPLACE WITH ACTUAL COLORING > -----
 		RGBQUAD color;
 		auto WIDTH = m_SceneDescription.imgResX;
@@ -219,4 +241,98 @@ namespace RecRays
 		return width / aspectRatio;
 	}
 
+	void RecursiveRayTracer::SetUpGeometry()
+	{
+		for (auto& obj : m_SceneDescription.GetObjects())
+		{
+			obj.SetGeometry();
+		}
+	}
+
+	RayIntersectionResult RecursiveRayTracer::IntersectRay(const Ray& ray)
+	{
+		// Find nearest object intersecting this ray
+		RayIntersectionResult finalResult;
+		float nearestT = INFINITY;
+		for (auto const &obj : m_SceneDescription.GetObjects())
+		{
+			auto const result = IntersectRayToObject(ray, obj);
+			if (result.WasIntersection() && result.t < nearestT && result.t > 0)
+			{
+				finalResult = result;
+				nearestT = result.t;
+			}
+			
+		}
+
+		return finalResult;
+	}
+
+	RayIntersectionResult RecursiveRayTracer::IntersectRayToObject(const Ray& ray, const Object& object) const
+	{
+		switch (object.shape)
+		{
+		case Shape::Sphere:
+			return IntersectRayToSphere(ray, object);
+			default:
+				assert(false && "Not yet implemented");
+		}	
+	}
+
+	RayIntersectionResult RecursiveRayTracer::IntersectRayToSphere(const Ray& ray, const Object& sphere) const
+	{
+		// Sanity check 
+		assert(sphere.shape == Shape::Sphere);
+
+		// We just have to compue intersection point solving for t in the
+		// ecuation of a sphere substituting by a point in the ray
+
+		// Compute discriminant to check what kind of intersection we have here
+		auto const d = ray.direction;
+		auto const e = ray.position;
+		auto const c = glm::vec3 (sphere.transform * glm::vec4(0,0,0,1)); // Extract sphere position from transform
+		auto const r = sphere.size; // Radius
+
+		auto discriminant = glm::dot(d, e - c);
+		discriminant = discriminant * discriminant;
+		discriminant -= (dot(d, d) * dot(e - c, e - c) - r * r);
+
+		float t = -dot(d, e - c);
+		std::vector<float> results;
+		if (discriminant < -0.0001)
+		{
+			// no intersection at all
+			return RayIntersectionResult{nullptr, glm::vec3(0), glm::vec3(0), 0};
+		}
+
+		if (abs(discriminant) > 0.0001) // near 0
+		{
+			results.emplace_back(t + glm::sqrt(discriminant));
+			results.emplace_back(t - glm::sqrt(discriminant));
+		}
+		else
+		{
+			results.emplace_back(t);
+		}
+
+		float minT = INFINITY;
+		for (auto const result : results)
+		{
+			if (result > 0 && result < minT)
+			{
+				minT = result;
+			}
+		}
+
+		// Compute intersection point and normal
+		glm::vec3 const intersectionPos = ray.position + minT * ray.direction;
+		glm::vec3 const intersectionNormal = glm::vec3(intersectionPos - c);
+
+
+
+		return RayIntersectionResult{
+				std::make_shared<const Object*>(&sphere),
+				intersectionNormal,
+				intersectionPos, minT };
+	}
 }
