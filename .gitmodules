@@ -5,3 +5,6 @@
 	path = rec_rays/vendor/freeimage
 	url = https://github.com/LDiazN/freeimage.git
 
+[submodule ".\\rec_rays\\vendor\\sdl"]
+	path = .\\rec_rays\\vendor\\sdl
+	url = https://github.com/LDiazN/SDL.git

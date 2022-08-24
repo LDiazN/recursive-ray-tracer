@@ -197,19 +197,30 @@ namespace RecRays
 
 		// Now we can intersect things with rays
 		RGBQUAD color;
-		for (size_t i = 0; i < m_SceneDescription.imgResX; i++)
+		ProgressBar bar(m_SceneDescription.imgResX * m_SceneDescription.imgResY);
+		// Use this variables to print a progress bar
+		for (size_t i = 0; i < m_SceneDescription.imgResY; i++)
 		{
-			for (size_t j = 0; i < m_SceneDescription.imgResY; i++)
+			for (size_t j = 0; j < m_SceneDescription.imgResX; j++)
 			{
 				auto const ray = m_RayGenerator.GetRayThroughPixel(i, j);
 				auto result = IntersectRay(ray);
 
-				auto const shadeColor = Shade(result);
+				auto const shadeColor = 255.0f * Shade(result);
+
+				// -- DEBUG ONLY ------------------------
+				//glm::vec3 const shadeColor(255.0f * glm::dot(ray.direction, m_RayGenerator.GetCamera().GetV()));
+			
+				// --------------------------------------
+
+
 				color.rgbRed = shadeColor.r;
 				color.rgbGreen = shadeColor.g;
 				color.rgbBlue = shadeColor.b;
 
 				FreeImage_SetPixelColor(Image, i, j, &color);
+				bar.Step();
+				bar.Draw();
 			}
 		}
 
@@ -332,6 +343,12 @@ namespace RecRays
 
 	bool  RecursiveRayTracer::IntersectRayToTriangle(const Ray& ray, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& n1, const glm::vec3& n2, const glm::vec3& n3, glm::vec3& outIntersection, glm::vec3& outNormal, float& outT, float minT, float maxT)
 	{
+		// Before everything, perform backface culling. If direction and triangle normal
+		// have an angle > 90, then it can't intersect by any mean. Winding order is clock wise
+		auto const triangleNormal = glm::normalize(glm::cross(v2 - v1, v3 - v2));
+		if (glm::dot(ray.direction, triangleNormal) <= 0)
+			return false;
+
 		// In this function we use the final result of solving the ec. system
 		// of intersecting the ray with the baricentric coordinates of the triangle
 		auto const detA = glm::determinant(glm::mat3(v1 - v2, v1 - v3, ray.direction));
@@ -413,7 +430,6 @@ namespace RecRays
 			glm::vec3 nextIntersect, nextNormal;
 			float nextT;
 			bool wasIntersection = IntersectRayToTriangle(ray, v1, v2, v3, n1, n2, n3, nextIntersect, nextNormal, nextT, minT, t);
-			hitSome = hitSome || wasIntersection;
 
 			// Continue if no intersection
 			if (!wasIntersection)
@@ -421,6 +437,7 @@ namespace RecRays
 
 			if (nextT > minT && nextT < t)
 			{
+				hitSome = hitSome || wasIntersection;
 				t = nextT;
 				intersection = nextIntersect;
 				normal = nextNormal;
@@ -444,8 +461,28 @@ namespace RecRays
 	{
 
 		if (rayIntersection.WasIntersection())
-			return (*rayIntersection.object)->diffuse;
+ 			return (*rayIntersection.object)->diffuse;
 		else
 			return glm::vec4(0);
+	}
+
+	// -- <Progres bar> ------------------------------------------------------------------------------------------
+	void ProgressBar::Step()
+	{
+		m_CurrentSteps = std::min(m_CurrentSteps + 1, m_NSteps);
+	}
+
+	void ProgressBar::Draw() const
+	{
+		float const progress = static_cast<float>(m_CurrentSteps) / static_cast<float>(m_NSteps);
+		std::cout << "[";
+		auto const pos = static_cast<size_t>((static_cast<float>(m_BarSize) * progress));
+		for (size_t i = 0; i < m_BarSize; ++i) {
+			if (i < pos) std::cout << "=";
+			else if (i == pos) std::cout << ">";
+			else std::cout << " ";
+		}
+		std::cout << "] " << static_cast<size_t>(progress * 100.0) <<  "(" << m_CurrentSteps << " / " << m_NSteps << ")" " %\r";
+		std::cout.flush();
 	}
 }

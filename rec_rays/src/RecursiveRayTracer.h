@@ -321,4 +321,27 @@ namespace RecRays
 		 */
 		glm::vec4 Shade(const RayIntersectionResult& rayIntersection);
 	};
+
+	/**
+	 * \brief Simple class to draw a progress bar
+	 */
+	class ProgressBar
+	{
+	public:
+		ProgressBar(size_t nSteps, size_t barSize = 70)
+			: m_BarSize(barSize)
+			, m_NSteps(nSteps)
+			, m_CurrentSteps(0)
+		{ }
+
+		void Step();
+
+		void Draw() const;
+
+	private:
+		size_t m_BarSize;
+		size_t m_NSteps;
+		size_t m_CurrentSteps;
+
+	};
 }

@@ -53,6 +53,7 @@ namespace RecRays
 		RecursiveRayTracer rayTracer(scene);
 
 		FIBITMAP* image;
+		std::cout << "Drawing scene..." << std::endl;
 		status = rayTracer.Draw(image);
 
 		if (status != SUCCESS)
@@ -79,12 +80,16 @@ namespace RecRays
 	{
 		std::cout << "Starting FreeImage..." << std::endl;
 		FreeImage_Initialise();
+		std::cout << "Loading Geometry..." << std::endl;
+		GeometryLoader::Init();
 	}
 
 	void Client::Shutdown()
 	{
 		std::cout << "Shutting down FreeImage..." << std::endl;
 		FreeImage_DeInitialise();
+		std::cout << "Freeing geometry memory..." << std::endl;
+		GeometryLoader::Shutdown();
 	}
 
 
