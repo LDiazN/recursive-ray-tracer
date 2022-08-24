@@ -157,7 +157,7 @@ namespace RecRays
 		pixelCoordinates += offsetInsidePixel;
 
 		// Generate ray 
-		return Ray{ m_Camera.GetPosition(), pixelCoordinates - m_Camera.GetPosition() };
+		return Ray{ m_Camera.GetPosition(), glm::normalize(pixelCoordinates - m_Camera.GetPosition()) };
 	}
 
 	// -- < Recursive ray tracer > ----------------------------------------------
@@ -196,32 +196,23 @@ namespace RecRays
 		SetUpGeometry();
 
 		// Now we can intersect things with rays
+		RGBQUAD color;
 		for (size_t i = 0; i < m_SceneDescription.imgResX; i++)
 		{
 			for (size_t j = 0; i < m_SceneDescription.imgResY; i++)
 			{
 				auto const ray = m_RayGenerator.GetRayThroughPixel(i, j);
-				// TODO handle ray-object intersection here
-			}
-		}
+				auto result = IntersectRay(ray);
 
-		// -- < TODO SAMPLE CODE, DELETE LATER AND REPLACE WITH ACTUAL COLORING > -----
-		RGBQUAD color;
-		auto WIDTH = m_SceneDescription.imgResX;
-		auto HEIGHT = m_SceneDescription.imgResY;
-
-		for (int i = 0; i < WIDTH; i++) {
-			for (int j = 0; j < HEIGHT; j++) {
-				color.rgbRed = 0;
-				color.rgbGreen = (double)i / WIDTH * 255.0;
-				color.rgbBlue = (double)j / HEIGHT * 255.0;
+				auto const shadeColor = Shade(result);
+				color.rgbRed = shadeColor.r;
+				color.rgbGreen = shadeColor.g;
+				color.rgbBlue = shadeColor.b;
 
 				FreeImage_SetPixelColor(Image, i, j, &color);
 			}
 		}
-		// --------------------------------------------------------------------------
 
-		// TODO: Terminar el ray tracer
 		outImage = Image;
 		return SUCCESS;
 	}
@@ -256,7 +247,7 @@ namespace RecRays
 		float nearestT = INFINITY;
 		for (auto const &obj : m_SceneDescription.GetObjects())
 		{
-			auto const result = IntersectRayToObject(ray, obj);
+			auto const result = IntersectRayToObject(ray, obj, 0, nearestT);
 			if (result.WasIntersection() && result.t < nearestT && result.t > 0)
 			{
 				finalResult = result;
@@ -268,18 +259,18 @@ namespace RecRays
 		return finalResult;
 	}
 
-	RayIntersectionResult RecursiveRayTracer::IntersectRayToObject(const Ray& ray, const Object& object) const
+	RayIntersectionResult RecursiveRayTracer::IntersectRayToObject(const Ray& ray, const Object& object, float minT, float maxT) const
 	{
 		switch (object.shape)
 		{
 		case Shape::Sphere:
 			return IntersectRayToSphere(ray, object);
-			default:
-				assert(false && "Not yet implemented");
+		default:
+			return IntersectRayToTesselatedObject(ray, object, minT, maxT);
 		}	
 	}
 
-	RayIntersectionResult RecursiveRayTracer::IntersectRayToSphere(const Ray& ray, const Object& sphere) const
+	RayIntersectionResult RecursiveRayTracer::IntersectRayToSphere(const Ray& ray, const Object& sphere, float minT, float maxT) const
 	{
 		// Sanity check 
 		assert(sphere.shape == Shape::Sphere);
@@ -299,10 +290,11 @@ namespace RecRays
 
 		float t = -dot(d, e - c);
 		std::vector<float> results;
+		auto emptyResult = RayIntersectionResult{ nullptr, glm::vec3(0), glm::vec3(0), 0 };
 		if (discriminant < -0.0001)
 		{
 			// no intersection at all
-			return RayIntersectionResult{nullptr, glm::vec3(0), glm::vec3(0), 0};
+			return emptyResult;
 		}
 
 		if (abs(discriminant) > 0.0001) // near 0
@@ -315,24 +307,145 @@ namespace RecRays
 			results.emplace_back(t);
 		}
 
-		float minT = INFINITY;
+		float desiredResult = INFINITY;
 		for (auto const result : results)
 		{
-			if (result > 0 && result < minT)
+			if (result > 0 && result < desiredResult)
 			{
-				minT = result;
+				desiredResult = result;
 			}
 		}
 
+		// Check if t out of ray range
+		if (desiredResult < minT && desiredResult > maxT)
+			return emptyResult;
+
 		// Compute intersection point and normal
-		glm::vec3 const intersectionPos = ray.position + minT * ray.direction;
+		glm::vec3 const intersectionPos = ray.position + desiredResult * ray.direction;
 		glm::vec3 const intersectionNormal = glm::vec3(intersectionPos - c);
-
-
 
 		return RayIntersectionResult{
 				std::make_shared<const Object*>(&sphere),
 				intersectionNormal,
-				intersectionPos, minT };
+				intersectionPos, desiredResult };
+	}
+
+	bool  RecursiveRayTracer::IntersectRayToTriangle(const Ray& ray, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& n1, const glm::vec3& n2, const glm::vec3& n3, glm::vec3& outIntersection, glm::vec3& outNormal, float& outT, float minT, float maxT)
+	{
+		// In this function we use the final result of solving the ec. system
+		// of intersecting the ray with the baricentric coordinates of the triangle
+		auto const detA = glm::determinant(glm::mat3(v1 - v2, v1 - v3, ray.direction));
+
+		auto const t = glm::determinant(glm::mat3(v1 - v2, v1 - v3, v1 - ray.position)) / detA;
+
+		// Check if intersection point is in valid range
+		if (t < minT || t > maxT)
+			return false;
+
+		// Check if beta in valid range
+		auto const beta = glm::determinant(glm::mat3(v1 - v2, v1 - ray.position, ray.direction)) / detA;
+		if (beta < 0 || beta > 1)
+			return false;
+
+		// Check if alpha in valid range
+		auto const alpha = glm::determinant(glm::mat3(v1 - ray.position, v1 - v3, ray.direction)) / detA;
+		if (alpha < 0 || alpha + beta > 1)
+			return false;
+
+		// Now that we actually hit the triangle, we need to compute the normals.
+		// We do so by interpolating the normals of the other 3 vertices.
+		// We have to find a,b,c such that
+		// intersectionPoint = a * v1 + b * v2 + c * v3
+		// and then we will use these numbers such that
+		// newNormal = a * n1 + b * n2 + c * n3.
+		// And therefore we have to solve for
+		// [v1 v2 v3] * [a b c]' = intersectionPoint
+
+		auto const intersectionPoint = ray.position + t * ray.direction;
+		auto vecMatrix = glm::mat3(v1, v2, v3);
+		auto const vecMatrixDet = glm::determinant(vecMatrix);
+
+		// Compute a
+		vecMatrix[0] = intersectionPoint;
+		auto const a = glm::determinant(vecMatrix) / vecMatrixDet;
+
+		// Compute b
+		vecMatrix[0] = v1;
+		vecMatrix[1] = intersectionPoint;
+		auto const b = glm::determinant(vecMatrix) / vecMatrixDet;
+
+		// Compute c
+		vecMatrix[1] = v2;
+		vecMatrix[2] = intersectionPoint;
+		auto const c = glm::determinant(vecMatrix) / vecMatrixDet;
+
+		// compute normal
+		auto const newNormal = a * n1 + b * n2 + c * n3;
+
+		// Return results
+		outNormal = newNormal;
+		outIntersection = intersectionPoint;
+		outT = t;
+
+		return true;
+	}
+
+	RayIntersectionResult RecursiveRayTracer::IntersectRayToTesselatedObject(const Ray& ray, const Object& object, float minT, float maxT) const
+	{
+		// sanity check
+		assert(object.shape != Shape::Sphere && "Sphere is parametric object");
+
+		glm::vec3 intersection, normal;
+		float t = maxT;
+		bool hitSome = false;
+		for (auto const& triIndices : object.geometry.indices)
+		{
+			glm::vec3 v1, v2, v3;
+			v1 = object.geometry.vertices[triIndices.x];
+			v2 = object.geometry.vertices[triIndices.y];
+			v3 = object.geometry.vertices[triIndices.z];
+
+			glm::vec3 n1, n2, n3;
+			n1 = object.geometry.normals[triIndices.x];
+			n2 = object.geometry.normals[triIndices.y];
+			n3 = object.geometry.normals[triIndices.z];
+
+			glm::vec3 nextIntersect, nextNormal;
+			float nextT;
+			bool wasIntersection = IntersectRayToTriangle(ray, v1, v2, v3, n1, n2, n3, nextIntersect, nextNormal, nextT, minT, t);
+			hitSome = hitSome || wasIntersection;
+
+			// Continue if no intersection
+			if (!wasIntersection)
+				continue;
+
+			if (nextT > minT && nextT < t)
+			{
+				t = nextT;
+				intersection = nextIntersect;
+				normal = nextNormal;
+			}
+		}
+
+		// Check if there was a hit
+		if (hitSome)
+		{
+			return RayIntersectionResult{
+			std::make_shared<const Object*>(&object),
+				normal,
+				intersection,
+				t };
+		}
+	
+		return RayIntersectionResult{nullptr, glm::vec3(0), glm::vec3(0), 0 };
+	}
+
+	glm::vec4 RecursiveRayTracer::Shade(const RayIntersectionResult& rayIntersection)
+	{
+
+		if (rayIntersection.WasIntersection())
+			return (*rayIntersection.object)->diffuse;
+		else
+			return glm::vec4(0);
 	}
 }

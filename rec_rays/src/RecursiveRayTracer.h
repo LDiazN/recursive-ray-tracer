@@ -222,7 +222,6 @@ namespace RecRays
 		float t; // Intersection point in ray. How far from origin 
 
 		bool WasIntersection() const { return object != nullptr; }
-
 	};
 
 	class RecursiveRayTracer
@@ -272,9 +271,12 @@ namespace RecRays
 		 * \brief Perform ray intersection between the provided ray and object
 		 * \param ray Ray to intersect
 		 * \param object Object to check for intersection, with vertices in world coordinates
+		 * \param minT = Minimum T value for ray
+		 * \param maxT = Maximum T value for ray. You can replace this if you already found an object and you're
+		 * not interested in any object further away
 		 * \return Ray intersection description if any
 		 */
-		RayIntersectionResult IntersectRayToObject(const Ray& ray, const Object& object) const;
+		RayIntersectionResult IntersectRayToObject(const Ray& ray, const Object& object, float minT = 0, float maxT = INFINITY) const;
 
 		/**
 		 * \brief Check for intersection between the provided ray and sphere. Will crash if
@@ -283,7 +285,40 @@ namespace RecRays
 		 * \param sphere Object of type sphere to check for intersection
 		 * \return Intersection description
 		 */
-		RayIntersectionResult IntersectRayToSphere(const Ray& ray, const Object& sphere) const;
+		RayIntersectionResult IntersectRayToSphere(const Ray& ray, const Object& sphere, float minT = 0, float maxT = INFINITY) const;
 
+		/**
+		 * \brief Intersect a ray to the triangle specified by the given vertices. Winding order does not
+		 * matter.
+		 * \param ray Ray to intersect
+		 * \param v1 First vertex of triangle 
+		 * \param v2 Second vertex of triangle 
+		 * \param v3 Third vertex of triangle
+		 * \param n1 normal fist vertex of triangle 
+		 * \param n2 normal second vertex of triangle 
+		 * \param n3 normal third vertex of triangle
+		 * \param outIntersection position of intersection with given triangle
+		 * \param outNormal interpolated normal at intersection
+		 * \param outT where in the ray the intersection happened 
+		 * \param minT minimum acceptable T (point from eye position)
+		 * \param maxT minimum acceptable T (point from eye position)
+		 * \return If there was an intersection
+		 */
+		static bool IntersectRayToTriangle(
+			const Ray& ray, 
+			const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, 
+			const glm::vec3& n1, const glm::vec3& n2, const glm::vec3& n3, 
+			glm::vec3& outIntersection, glm::vec3& outNormal, float& outT,
+			float minT, float maxT);
+
+		RayIntersectionResult IntersectRayToTesselatedObject(const Ray& ray, const Object& object, float minT = 0, float maxT = INFINITY) const;
+
+		/**
+		 * \brief select color using global information and ray intersection information
+		 * \param rayIntersection Compute color of corresponding pixel from the global information and
+		 *			ray intersection information
+		 * \return color corresponding to this pixel
+		 */
+		glm::vec4 Shade(const RayIntersectionResult& rayIntersection);
 	};
 }

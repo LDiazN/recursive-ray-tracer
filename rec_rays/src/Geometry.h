@@ -39,8 +39,8 @@ namespace RecRays
 		static void LoadTeapotGeometry();
 		static void LoadCubeGeometry();
 	private:
-		static Geometry s_CubeGeometry;
-		static Geometry s_TeapotGeometry;
+		inline static Geometry s_CubeGeometry;
+		inline static Geometry s_TeapotGeometry;
 		inline static bool s_Initialized = false;
 		static constexpr char* s_PathToTeapotObj = "models/teapot.obj";
 	};
