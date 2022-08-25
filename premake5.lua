@@ -15,8 +15,10 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDir = {}
 IncludeDir["glm"]   = "rec_rays/vendor/glm"
 IncludeDir["freeimage"] = "rec_rays/vendor/freeimage/Source"
+IncludeDir["sdl"] = "rec_rays/vendor/sdl/include"
 
 include "rec_rays/vendor/freeimage"
+include "rec_rays/vendor/sdl"
 
 project "rec_rays"
 	location "rec_rays"
@@ -45,10 +47,14 @@ project "rec_rays"
 		"rec_rays/src", --should not work
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.freeimage}",
+		"%{IncludeDir.sdl}"
 	}
 
 	links 
 	{
+		"SDL",
+		"SDLmain",
+
 		"FreeImage",
 		"FreeImaged.dll",
 		"FreeImageLib",
@@ -88,5 +94,6 @@ project "rec_rays"
 
 	filter "system:windows"
 		postbuildcommands {
-			"{COPYFILE} vendor/freeimage/Dist/x64/FreeImaged.dll ../bin/Debug-windows-x86_64/rec_rays" 
+			"{COPYFILE} vendor/freeimage/Dist/x64/FreeImaged.dll ../bin/Debug-windows-x86_64/rec_rays" ,
+			"{COPYFILE} ../x64/Debug/SDL2.dll ../bin/Debug-windows-x86_64/rec_rays"
 		}
