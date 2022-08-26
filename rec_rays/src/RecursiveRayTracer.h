@@ -6,6 +6,7 @@
 // Third party includes
 #include <glm/glm.hpp>
 #include <FreeImage.h>
+#include <SDL.h>
 
 // Local includes
 #include "Geometry.h"
@@ -320,6 +321,10 @@ namespace RecRays
 		 * \return color corresponding to this pixel
 		 */
 		glm::vec4 Shade(const RayIntersectionResult& rayIntersection);
+
+		// -- < SDL stuff > ----------------------------------------------
+	private:
+		
 	};
 
 	/**

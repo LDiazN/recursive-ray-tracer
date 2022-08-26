@@ -1,3 +1,6 @@
+// Third party includes
+#include <SDL.h>
+
 // stl includes
 #include <iostream>
 
@@ -82,6 +85,17 @@ namespace RecRays
 		FreeImage_Initialise();
 		std::cout << "Loading Geometry..." << std::endl;
 		GeometryLoader::Init();
+		std::cout << "Starting SDL..." << std::endl;
+
+		auto const error = SDL_Init(SDL_INIT_VIDEO);
+		if (error)
+		{
+			const char* sdlError = SDL_GetError();
+			std::cerr << "Could not init SDL. Error: " << sdlError << std::endl;
+			exit(1);
+		}
+
+
 	}
 
 	void Client::Shutdown()
@@ -90,6 +104,8 @@ namespace RecRays
 		FreeImage_DeInitialise();
 		std::cout << "Freeing geometry memory..." << std::endl;
 		GeometryLoader::Shutdown();
+		std::cout << "Shutting down SDL..." << std::endl;
+		SDL_Quit();
 	}
 
 

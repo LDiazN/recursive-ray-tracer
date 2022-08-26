@@ -2,11 +2,12 @@
 #include <FreeImage.h>
 #include <glm/glm.hpp>
 #include "RecRays.h"
+#include <SDL.h>
 
 int main(int argc, char ** argv)
 {
 
-
+    
     // Parse arguments for client object
     std::string sceneFile;
 	int status = RecRays::Client::ParseArgs(argc, argv, sceneFile);

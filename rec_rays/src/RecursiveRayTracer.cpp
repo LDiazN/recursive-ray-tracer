@@ -1,7 +1,13 @@
+// Local includes
 #include "RecursiveRayTracer.h"
 #include "RecRays.h"
+
+// STL includes
 #include <assert.h>
+
+// Vendor includes
 #include <glm/gtc/matrix_transform.hpp>
+#include <SDL.h>
 
 namespace RecRays
 {
@@ -195,14 +201,29 @@ namespace RecRays
 		// enough to simulate camera positioning
 		SetUpGeometry();
 
+		// Set up SDL window
+		SDL_Renderer* renderer = nullptr;
+		SDL_Window* window = nullptr;
+		SDL_Event event;
+		SDL_CreateWindowAndRenderer(m_SceneDescription.imgResX, m_SceneDescription.imgResY, 0, &window, &renderer);
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+		SDL_RenderClear(renderer);
+		SDL_SetWindowTitle(window, "Ray Tracer preview");
+
 		// Now we can intersect things with rays
 		RGBQUAD color;
 		ProgressBar bar(m_SceneDescription.imgResX * m_SceneDescription.imgResY);
 		// Use this variables to print a progress bar
+		
 		for (size_t i = 0; i < m_SceneDescription.imgResY; i++)
 		{
 			for (size_t j = 0; j < m_SceneDescription.imgResX; j++)
 			{
+				// Set next pixel to render as white
+				SDL_SetRenderDrawColor(renderer, 1, 1, 1, 1);
+				SDL_RenderDrawPoint(renderer, i, j);
+				SDL_RenderPresent(renderer);
+
 				auto const ray = m_RayGenerator.GetRayThroughPixel(i, j);
 				auto result = IntersectRay(ray);
 
@@ -212,17 +233,35 @@ namespace RecRays
 				//glm::vec3 const shadeColor(255.0f * glm::dot(ray.direction, m_RayGenerator.GetCamera().GetV()));
 			
 				// --------------------------------------
-
-
 				color.rgbRed = shadeColor.r;
 				color.rgbGreen = shadeColor.g;
 				color.rgbBlue = shadeColor.b;
-
+				// Write to image
 				FreeImage_SetPixelColor(Image, i, j, &color);
+
+				// Update renderer & window
+				SDL_SetRenderDrawColor(
+					renderer, 
+					static_cast<Uint8>(shadeColor.r), 
+					static_cast<Uint8>(shadeColor.g), 
+					static_cast<Uint8>(shadeColor.b), 
+					static_cast<Uint8>(shadeColor.a)
+				);
+
+				SDL_RenderDrawPoint(renderer, i, j);
+
+				if (SDL_PollEvent(&event));
+
+				SDL_RenderPresent(renderer);
+
+				// Update bar
 				bar.Step();
 				bar.Draw();
 			}
 		}
+
+		SDL_DestroyRenderer(renderer);
+		SDL_DestroyWindow(window);
 
 		outImage = Image;
 		return SUCCESS;
@@ -345,8 +384,8 @@ namespace RecRays
 	{
 		// Before everything, perform backface culling. If direction and triangle normal
 		// have an angle > 90, then it can't intersect by any mean. Winding order is clock wise
-		auto const triangleNormal = glm::normalize(glm::cross(v2 - v1, v3 - v2));
-		if (glm::dot(ray.direction, triangleNormal) <= 0)
+		auto const triangleNormal = glm::normalize(glm::cross(v2 - v1, v3 - v1));
+		if (glm::dot(ray.direction, triangleNormal) >= 0)
 			return false;
 
 		// In this function we use the final result of solving the ec. system
@@ -461,7 +500,8 @@ namespace RecRays
 	{
 
 		if (rayIntersection.WasIntersection())
- 			return (*rayIntersection.object)->diffuse;
+			//return (*rayIntersection.object)->diffuse;
+			return glm::vec4(1);
 		else
 			return glm::vec4(0);
 	}

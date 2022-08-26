@@ -43,5 +43,6 @@ namespace RecRays
 		inline static Geometry s_TeapotGeometry;
 		inline static bool s_Initialized = false;
 		static constexpr char* s_PathToTeapotObj = "models/teapot.obj";
+		static constexpr char* s_PathToCubeObj = "models/cube.obj";
 	};
 }
