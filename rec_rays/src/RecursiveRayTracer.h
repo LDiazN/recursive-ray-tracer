@@ -199,7 +199,7 @@ namespace RecRays
 		 * \param type Type of ray to generate
 		 * \return Resulting ray	
 		 */
-		Ray GetRayThroughPixel(size_t pixelX, size_t pixelY, RayType type = RayType::MID);
+		Ray GetRayThroughPixel(size_t pixelX, size_t pixelY, RayType type = RayType::MID) const;
 
 		const Camera& GetCamera() const { return m_Camera; }
 
@@ -221,8 +221,44 @@ namespace RecRays
 		glm::vec3 normal;
 		glm::vec3 position; // world coordinates
 		float t; // Intersection point in ray. How far from origin 
+		Ray ray; // Ray casted
 
 		bool WasIntersection() const { return object != nullptr; }
+	};
+
+	template<typename T>
+	class TwoDimensionVector
+	{
+	public:
+		TwoDimensionVector(size_t dim1Size, size_t dim2Size)
+			: m_Dim1Size(dim1Size)
+			, m_Dim2Size(dim2Size)
+		{
+			// Elements are side by side, not a list of headers of vectors
+			m_Data = std::vector<T>(dim1Size * dim2Size);
+
+
+		}
+
+		T Get(size_t i, size_t j) const
+		{
+			assert(i < m_Dim1Size&& j < m_Dim2Size && "Invalid access to ndmensional array");
+			return m_Data[i * m_Dim2Size + j];
+		}
+
+		void Set(size_t i, size_t j, T const& elem)
+		{
+			assert(i < m_Dim1Size && j < m_Dim2Size && "Invalid access to ndmensional array");
+			m_Data[i * m_Dim2Size + j] = elem;
+		}
+
+		size_t GetDim1Size() const { return m_Dim1Size; }
+		size_t GetDim2Size() const { return m_Dim2Size; }
+
+	private:
+		size_t m_Dim1Size;
+		size_t m_Dim2Size;
+		std::vector<T> m_Data;
 	};
 
 	class RecursiveRayTracer
@@ -230,7 +266,7 @@ namespace RecRays
 	public:
 		RecursiveRayTracer(const SceneDescription& description);
 
-		int Draw(FIBITMAP*& outImage);
+		int Draw(FIBITMAP*& outImage, size_t nThreads);
 
 	private:
 		// Scene to render 
@@ -239,6 +275,8 @@ namespace RecRays
 		RayGenerator m_RayGenerator;
 
 	private:
+		void DrawThread(TwoDimensionVector<glm::vec4>& outBuffer, size_t startI, size_t endI, size_t startJ, size_t endJ);
+
 		/**
 		 * \brief Utility function to compute focal length from camera configuration
 		 * \param fovy Fovy for camera specification
@@ -289,6 +327,16 @@ namespace RecRays
 		RayIntersectionResult IntersectRayToSphere(const Ray& ray, const Object& sphere, float minT = 0, float maxT = INFINITY) const;
 
 		/**
+		 * \brief Check if the specified point is inside a triangle specified by its vertices
+		 * \param point Point to check if inside
+		 * \param v1 first vertice
+		 * \param v2 second vertice
+		 * \param v3 third vertice
+		 * \return if point is inside triangle
+		 */
+		static bool PointInsideTriangle(const glm::vec3& point, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3);
+
+		/**
 		 * \brief Intersect a ray to the triangle specified by the given vertices. Winding order does not
 		 * matter.
 		 * \param ray Ray to intersect
@@ -322,8 +370,6 @@ namespace RecRays
 		 */
 		glm::vec4 Shade(const RayIntersectionResult& rayIntersection);
 
-		// -- < SDL stuff > ----------------------------------------------
-	private:
 		
 	};
 
