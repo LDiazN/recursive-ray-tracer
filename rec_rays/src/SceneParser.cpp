@@ -69,7 +69,7 @@ namespace RecRays
 			else if (command == "specular")
 			{
 				auto const nums = ParseNNumbers(ss, 4);
-				nextObject.ambient = glm::vec4(nums[0], nums[1], nums[2], nums[3]);
+				nextObject.specular = glm::vec4(nums[0], nums[1], nums[2], nums[3]);
 			}
 			else if (command == "shininess")
 			{
@@ -108,7 +108,7 @@ namespace RecRays
 
 				nextObject.size = nums[0];
 				description.AddObject(nextObject);
-				nextObject = Object();
+				//nextObject = Object();
 			}
 			else if (command == "translate")
 			{

@@ -57,7 +57,7 @@ namespace RecRays
 
 		FIBITMAP* image;
 		std::cout << "Drawing scene..." << std::endl;
-		status = rayTracer.Draw(image);
+		status = rayTracer.Draw(image, 12);
 
 		if (status != SUCCESS)
 		{
