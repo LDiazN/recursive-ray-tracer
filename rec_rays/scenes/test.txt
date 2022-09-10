@@ -99,4 +99,4 @@ translate 0 0 -0.2
 popTransform
 
 # image width height resolutionX resolutionY distanceToViewplane
-image 2 2 512 512 10
+image 10 10 512 512 10
