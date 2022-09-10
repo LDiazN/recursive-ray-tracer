@@ -16,6 +16,7 @@ IncludeDir = {}
 IncludeDir["glm"]   = "rec_rays/vendor/glm"
 IncludeDir["freeimage"] = "rec_rays/vendor/freeimage/Source"
 IncludeDir["sdl"] = "rec_rays/vendor/sdl/include"
+IncludeDir["threadpool"] = "rec_rays/vendor/threadpool"
 
 include "rec_rays/vendor/freeimage"
 include "rec_rays/vendor/sdl"
@@ -35,6 +36,7 @@ project "rec_rays"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
+		"%{IncludeDir.threadpool}/**.cpp" -- Threadpool dependency
 	}
 
 	defines 
@@ -47,7 +49,8 @@ project "rec_rays"
 		"rec_rays/src", --should not work
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.freeimage}",
-		"%{IncludeDir.sdl}"
+		"%{IncludeDir.sdl}",
+		"%{IncludeDir.threadpool}"
 	}
 
 	links 
