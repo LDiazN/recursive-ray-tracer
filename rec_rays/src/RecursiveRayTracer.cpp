@@ -137,14 +137,14 @@ namespace RecRays
 	Ray RayGenerator::GetRayThroughPixel(size_t pixelX, size_t pixelY, RayType type) const
 	{
 		// Find the top left corner to get position of next pixel from this
-		glm::vec3 topLeftCorner = -m_Left * m_Camera.GetU() + m_Top * m_Camera.GetW() + m_DistanceToViewPlane * m_Camera.GetV();
+		const glm::vec3 topLeftCorner = -m_Left * m_Camera.GetU() + m_Top * m_Camera.GetW() + m_DistanceToViewPlane * m_Camera.GetV();
 
 		// Use pixel width and height to find how much to offset for each step
-		float pixelWidth = (m_Right + m_Left) / static_cast<float>(m_PixelsX);
-		float pixelHeight = (m_Top + m_Bottom) / static_cast<float>(m_PixelsY);
+		const float pixelWidth = (m_Right + m_Left) / static_cast<float>(m_PixelsX);
+		const float pixelHeight = (m_Top + m_Bottom) / static_cast<float>(m_PixelsY);
 
-		float horizontalOffset = static_cast<float>(pixelX) * pixelWidth;
-		float verticalOffset = static_cast<float>(pixelY) * pixelHeight;
+		const float horizontalOffset = static_cast<float>(pixelX) * pixelWidth;
+		const float verticalOffset = static_cast<float>(pixelY) * pixelHeight;
 
 		// Use offset in camera coordinates to find how much in each direction to move
 		auto pixelCoordinates = topLeftCorner +
@@ -154,10 +154,19 @@ namespace RecRays
 		// Now depending on the ray type, we find a different position inside the pixel
 		glm::vec3 offsetInsidePixel(0);
 
+		float randomX;
+		float randomY;
+
 		switch (type)
 		{
 		case RayType::TOP_LEFT: break;
 		case RayType::MID: offsetInsidePixel = m_Camera.GetU() * pixelWidth / 2.f - m_Camera.GetW() * pixelHeight / 2.f; break;
+		case RayType::RANDOMIZED:
+			// Add random offset inside pixel
+			randomX = pixelWidth * static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			randomY = pixelHeight * static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			offsetInsidePixel = m_Camera.GetU() * randomX + m_Camera.GetV() * randomY;
+			break; 
 		default: assert(false && "Ray type not yet implemented");
 		}
 
@@ -185,6 +194,9 @@ namespace RecRays
 			description.imgResY,
 			FocalLength(description.camera.fovy,height)
 		};
+
+		// Set up random seed to be used in ray generation
+		srand(static_cast<unsigned>(time(nullptr)));
 
 	}
 
@@ -217,7 +229,6 @@ namespace RecRays
 			futures.push_back(threads.execute(&RecursiveRayTracer::DrawThread, this, std::ref(colorBuffer), 0, m_SceneDescription.imgResX, i * yIntervalSize, (i + 1) * yIntervalSize));
 		}
 
-		// TODO finish parallel shading. You schedule a way to display results before they're finished using SDL
 
 		// Now we can intersect things with rays
 		RGBQUAD color;
