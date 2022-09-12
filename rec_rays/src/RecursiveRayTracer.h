@@ -40,7 +40,7 @@ namespace RecRays
 	struct Object
 	{
 		// Coloring
-		glm::vec4 ambient, diffuse, specular, emission;
+		glm::vec4 ambient, diffuse, specular, emission, mirror;
 		float shininess;
 
 		// Geometry
@@ -302,9 +302,11 @@ namespace RecRays
 		 * \brief Intersect a ray and return a description of the intersection point, if any.
 		 * Returned object is guaranteed to be the nearest
 		 * \param ray Intersect the provided ray with some objects in the scene
+		 * \param minT minimum value of T to consider
+		 * \param maxT maximum value of T to consider
 		 * \return Result describing intersection point if any
 		 */
-		RayIntersectionResult IntersectRay(const Ray& ray);
+		RayIntersectionResult IntersectRay(const Ray& ray, float minT = 0, float maxT = INFINITY);
 
 		/**
 		 * \brief Perform ray intersection between the provided ray and object
@@ -366,9 +368,10 @@ namespace RecRays
 		 * \brief select color using global information and ray intersection information
 		 * \param rayIntersection Compute color of corresponding pixel from the global information and
 		 *			ray intersection information
+		 * \param maxRecursionDepth How many recursive steps to perform for reflections
 		 * \return color corresponding to this pixel
 		 */
-		glm::vec4 Shade(const RayIntersectionResult& rayIntersection);
+		glm::vec4 Shade(const RayIntersectionResult& rayIntersection, uint32_t maxRecursionDepth = 10);
 
 		
 	};

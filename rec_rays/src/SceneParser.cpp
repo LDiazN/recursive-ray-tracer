@@ -76,6 +76,11 @@ namespace RecRays
 				auto const nums = ParseNNumbers(ss, 1);
 				nextObject.shininess = nums[0];
 			}
+			else if (command == "mirror")
+			{
+				auto const nums = ParseNNumbers(ss, 4);
+				nextObject.mirror = glm::vec4(nums[0], nums[1], nums[2], nums[3]);
+			}
 			else if (command == "size")
 			{
 				auto const nums = ParseNNumbers(ss, 1);

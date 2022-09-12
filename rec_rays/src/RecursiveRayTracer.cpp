@@ -358,14 +358,14 @@ namespace RecRays
 		}
 	}
 
-	RayIntersectionResult RecursiveRayTracer::IntersectRay(const Ray& ray)
+	RayIntersectionResult RecursiveRayTracer::IntersectRay(const Ray& ray, float minT, float maxT)
 	{
 		// Find nearest object intersecting this ray
 		RayIntersectionResult finalResult;
-		float nearestT = INFINITY;
+		float nearestT = maxT;
 		for (auto const& obj : m_SceneDescription.GetObjects())
 		{
-			auto const result = IntersectRayToObject(ray, obj, 0, nearestT);
+			auto const result = IntersectRayToObject(ray, obj, minT, nearestT);
 			if (result.WasIntersection() && result.t < nearestT && result.t > 0)
 			{
 				finalResult = result;
@@ -584,7 +584,7 @@ namespace RecRays
 		return RayIntersectionResult{nullptr, glm::vec3(0), glm::vec3(0), 0 };
 	}
 
-	glm::vec4 RecursiveRayTracer::Shade(const RayIntersectionResult& rayIntersection)
+	glm::vec4 RecursiveRayTracer::Shade(const RayIntersectionResult& rayIntersection, uint32_t maxRecursionDepth)
 	{
 		// If no intersection, do nothing and return black
 		if (!rayIntersection.WasIntersection())
@@ -604,10 +604,27 @@ namespace RecRays
 			// Compute direction of light. If point light, then use relative position.
 			// If directional light, use straight up as direction.
 			glm::vec3 lightDirection(0);
+			float maxRayToLightLen;
 			if (light.position.w == 0.0)
+			{
 				lightDirection = glm::normalize(light.position);
+				maxRayToLightLen = INFINITY;
+			}
 			else
-				lightDirection = glm::normalize(glm::vec3(light.position) - rayIntersection.position);
+			{
+				lightDirection = glm::vec3(light.position) - rayIntersection.position;
+				maxRayToLightLen = glm::length(lightDirection);
+				lightDirection = lightDirection / maxRayToLightLen;
+			}
+
+			// Check if light can reach this point 
+			Ray ray{
+				rayIntersection.position + normal* 0.01f, lightDirection
+			};
+
+			auto const result = IntersectRay(ray, 0.f, maxRayToLightLen);
+			if (result.WasIntersection())
+				continue; // Light is occluded, so nothing more to add
 
 			// Compute diffuse 
 			diffuse +=
@@ -636,6 +653,25 @@ namespace RecRays
 		}
 
 		lightColor += diffuse + specular;
+		lightColor.a = 1;
+
+		if (maxRecursionDepth == 0)
+			return lightColor;
+
+		// Now compute reflections.
+		// Generate reflection vector: r = d - 2(dot(d, normal)) * normal
+
+		auto const& d = rayIntersection.ray.direction;
+		const glm::vec3 reflectionDir = d - 2.f * (glm::dot(d, normal)) * normal;
+		const Ray reflectionRay{ rayIntersection.position + normal * 0.01f, reflectionDir };
+		auto const reflecResult = IntersectRay(reflectionRay);
+
+		// If nothing to reflect, just return your own color
+		if (!reflecResult.WasIntersection())
+			return lightColor;
+
+		auto const reflecColor = object.mirror * Shade(rayIntersection, maxRecursionDepth - 1);
+		lightColor += reflecColor;
 		lightColor.a = 1;
 		return lightColor;
 	}
