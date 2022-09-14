@@ -662,16 +662,17 @@ namespace RecRays
 		// Generate reflection vector: r = d - 2(dot(d, normal)) * normal
 
 		auto const& d = rayIntersection.ray.direction;
-		const glm::vec3 reflectionDir = d - 2.f * (glm::dot(d, normal)) * normal;
-		const Ray reflectionRay{ rayIntersection.position + normal * 0.01f, reflectionDir };
+		const glm::vec3 reflectionDir = glm::normalize(d - 2.f * (glm::dot(d, normal)) * normal);
+		const Ray reflectionRay{ rayIntersection.position + normal * 0.00001f, reflectionDir };
 		auto const reflecResult = IntersectRay(reflectionRay);
 
 		// If nothing to reflect, just return your own color
 		if (!reflecResult.WasIntersection())
 			return lightColor;
 
-		auto const reflecColor = object.mirror * Shade(rayIntersection, maxRecursionDepth - 1);
+		auto const reflecColor = object.mirror * Shade(reflecResult, maxRecursionDepth - 1);
 		lightColor += reflecColor;
+		//lightColor = reflecColor;
 		lightColor.a = 1;
 		return lightColor;
 	}
