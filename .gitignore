@@ -31,7 +31,6 @@
 *.app
 *.dll
 *.obj
-bin
 bin-int
 *.vcxproj*
 *.sln
