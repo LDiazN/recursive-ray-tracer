@@ -4,9 +4,9 @@
 [submodule "rec_rays/vendor/freeimage"]
 	path = rec_rays/vendor/freeimage
 	url = https://github.com/LDiazN/freeimage.git
-[submodule "./rec_rays/vendor/sdl"]
+[submodule "rec_rays/vendor/sdl"]
 	path = ./rec_rays/vendor/sdl
 	url = https://github.com/LDiazN/SDL.git
-[submodule "./rec_rays/vendor/threadpool"]
+[submodule "rec_rays/vendor/threadpool"]
 	path = ./rec_rays/vendor/threadpool
 	url = https://github.com/fbastos1/thread_pool_cpp17.git
