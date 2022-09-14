@@ -1,6 +1,6 @@
 workspace "RecRays"
 	architecture "x64"
-	startproject "Sandbox"
+	startproject "rec_rays"
 
 	configurations
 	{
