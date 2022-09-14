@@ -23,5 +23,8 @@ For now, the only supported platform is windows. To install:
 1. `git clone --recurse-submodules` this repository
 2. Go to `recursive-ray-tracer/scripts`
 3. Run `win-genproject.bat`. This command will generate a Visual Studio 2022 project you can open and compile.
-4. Open the generated visual studio solution, hit run, and that's it!
+4. Open the generated visual studio solution `RecRays.sln`
+5. Set start up project as `rec_rays` if necessary
+6. Specify path of scene to render as command line arguments. You can find a default scene in `rec_rays/scenes/test.txt`
+
 
