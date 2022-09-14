@@ -1,6 +1,6 @@
 # Recursive Ray Tracer
 
-TODO Add image here
+![recursive ray tracer v1 output](./img/sample_scene_rtv1.png)
 
 
 Simple example of recursive ray tracer to render scenes offline. 
