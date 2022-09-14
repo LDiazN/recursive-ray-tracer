@@ -305,7 +305,7 @@ namespace RecRays
 				color.rgbGreen = shadeColor.g;
 				color.rgbBlue = shadeColor.b;
 
-				FreeImage_SetPixelColor(Image, i, j, &color);
+				FreeImage_SetPixelColor(Image, i, m_SceneDescription.imgResX - j, &color);
 			}
 		}
 
@@ -672,7 +672,6 @@ namespace RecRays
 
 		auto const reflecColor = object.mirror * Shade(reflecResult, maxRecursionDepth - 1);
 		lightColor += reflecColor;
-		//lightColor = reflecColor;
 		lightColor.a = 1;
 		return lightColor;
 	}
