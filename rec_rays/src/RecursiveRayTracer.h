@@ -217,7 +217,16 @@ namespace RecRays
 
 	struct RayIntersectionResult
 	{
-		std::shared_ptr<const Object*> object;
+		RayIntersectionResult(const Object* _object = nullptr, glm::vec3 _normal = glm::vec3(0), glm::vec3 _position = glm::vec3(0), float _t = 0, Ray _ray = Ray())
+			: object(_object)
+			, normal(_normal)
+			, position(_position)
+			, t(_t)
+			, ray(_ray)
+		{
+
+		}
+		const Object* object;
 		glm::vec3 normal;
 		glm::vec3 position; // world coordinates
 		float t; // Intersection point in ray. How far from origin 
@@ -236,8 +245,6 @@ namespace RecRays
 		{
 			// Elements are side by side, not a list of headers of vectors
 			m_Data = std::vector<T>(dim1Size * dim2Size);
-
-
 		}
 
 		T Get(size_t i, size_t j) const
@@ -352,7 +359,7 @@ namespace RecRays
 		 * \param outNormal interpolated normal at intersection
 		 * \param outT where in the ray the intersection happened 
 		 * \param minT minimum acceptable T (point from eye position)
-		 * \param maxT minimum acceptable T (point from eye position)
+		 * \param maxT max acceptable T (point from eye position)
 		 * \return If there was an intersection
 		 */
 		static bool IntersectRayToTriangle(
@@ -362,6 +369,14 @@ namespace RecRays
 			glm::vec3& outIntersection, glm::vec3& outNormal, float& outT,
 			float minT, float maxT);
 
+		/**
+		 * \brief Intersect a given ray with a tesselated object (an object made of triangles)
+		 * \param ray  Ray to intersect
+		 * \param object Object to intersect with
+		 * \param minT minimum acceptable T (point from eye position)
+		 * \param maxT max acceptable T (point from eye position)
+		 * \return Result of ray intersection with this object
+		 */
 		RayIntersectionResult IntersectRayToTesselatedObject(const Ray& ray, const Object& object, float minT = 0, float maxT = INFINITY) const;
 
 		/**

@@ -443,7 +443,7 @@ namespace RecRays
 		glm::vec3 const intersectionNormal = glm::normalize(glm::vec3(intersectionPos - c));
 
 		return RayIntersectionResult{
-				std::make_shared<const Object*>(&sphere),
+				&sphere,
 				intersectionNormal,
 				intersectionPos, desiredResult, ray };
 	}
@@ -573,7 +573,7 @@ namespace RecRays
 		if (hitSome)
 		{
 			return RayIntersectionResult{
-			std::make_shared<const Object*>(&object),
+			&object,
 				normal,
 				intersection,
 				t,
@@ -593,7 +593,7 @@ namespace RecRays
 
 		auto normal = glm::normalize(rayIntersection.normal);
 		glm::vec4 lightColor(0);
-		auto const &object = **rayIntersection.object;
+		auto const &object = *rayIntersection.object;
 		// Add ambient color
 		lightColor += object.ambient;
 
