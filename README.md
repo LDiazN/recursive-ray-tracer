@@ -1,8 +1,8 @@
 # Recursive Ray Tracer
 
-![recursive ray tracer v1 output](./img/sample_scene_rtv1.png)
-
-
+<p align="center">
+   <img src="img/sample_scene_rtv1.png" alt="recursive ray tracer v1 output" style="center"/>
+</p>
 Simple example of recursive ray tracer to render scenes offline. 
 
 # Features 
